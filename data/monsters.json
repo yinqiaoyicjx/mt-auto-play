@@ -1,0 +1,155 @@
+{
+  "slime_1": {
+    "name": "史莱姆",
+    "atk": 20,
+    "defense": 10,
+    "hp": 50,
+    "gold": 10,
+    "exp": 5,
+    "floor": 1
+  },
+  "slime_2": {
+    "name": "史莱姆",
+    "atk": 30,
+    "defense": 15,
+    "hp": 80,
+    "gold": 15,
+    "exp": 8,
+    "floor": 2
+  },
+  "bat_1": {
+    "name": "小蝙蝠",
+    "atk": 40,
+    "defense": 20,
+    "hp": 100,
+    "gold": 20,
+    "exp": 10,
+    "floor": 1
+  },
+  "bat_2": {
+    "name": "大蝙蝠",
+    "atk": 60,
+    "defense": 30,
+    "hp": 150,
+    "gold": 30,
+    "exp": 15,
+    "floor": 3
+  },
+  "skeleton_1": {
+    "name": "骷髅",
+    "atk": 50,
+    "defense": 25,
+    "hp": 120,
+    "gold": 25,
+    "exp": 12,
+    "floor": 2
+  },
+  "skeleton_2": {
+    "name": "骷髅兵",
+    "atk": 80,
+    "defense": 40,
+    "hp": 200,
+    "gold": 40,
+    "exp": 20,
+    "floor": 5
+  },
+  "zombie_1": {
+    "name": "僵尸",
+    "atk": 100,
+    "defense": 50,
+    "hp": 300,
+    "gold": 50,
+    "exp": 25,
+    "floor": 6
+  },
+  "ghost_1": {
+    "name": "小鬼",
+    "atk": 120,
+    "defense": 60,
+    "hp": 350,
+    "gold": 60,
+    "exp": 30,
+    "floor": 7
+  },
+  "knight_1": {
+    "name": "初级骑士",
+    "atk": 150,
+    "defense": 80,
+    "hp": 500,
+    "gold": 100,
+    "exp": 50,
+    "floor": 8
+  },
+  "knight_2": {
+    "name": "中级骑士",
+    "atk": 200,
+    "defense": 100,
+    "hp": 700,
+    "gold": 150,
+    "exp": 70,
+    "floor": 10
+  },
+  "mage_1": {
+    "name": "法师",
+    "atk": 250,
+    "defense": 120,
+    "hp": 800,
+    "gold": 200,
+    "exp": 100,
+    "floor": 12
+  },
+  "dragon_1": {
+    "name": "绿龙",
+    "atk": 300,
+    "defense": 150,
+    "hp": 1000,
+    "gold": 300,
+    "exp": 150,
+    "floor": 15
+  },
+  "demon_1": {
+    "name": "恶魔",
+    "atk": 400,
+    "defense": 200,
+    "hp": 1500,
+    "gold": 400,
+    "exp": 200,
+    "floor": 18
+  },
+  "golem_1": {
+    "name": "石头人",
+    "atk": 500,
+    "defense": 300,
+    "hp": 2000,
+    "gold": 500,
+    "exp": 300,
+    "floor": 20
+  },
+  "boss_dragon": {
+    "name": "红龙",
+    "atk": 800,
+    "defense": 500,
+    "hp": 5000,
+    "gold": 1000,
+    "exp": 500,
+    "floor": 22
+  },
+  "boss_final": {
+    "name": "魔王",
+    "atk": 1000,
+    "defense": 800,
+    "hp": 10000,
+    "gold": 2000,
+    "exp": 1000,
+    "floor": 24
+  },
+  "gatekeeper": {
+    "name": "守门",
+    "atk": 2000,
+    "defense": 1000,
+    "hp": 5000,
+    "gold": 0,
+    "exp": 0,
+    "floor": 24
+  }
+}

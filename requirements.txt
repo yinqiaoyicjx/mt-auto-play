@@ -1,0 +1,15 @@
+# 魔塔自动游玩脚本 - 依赖包
+
+# 核心依赖
+mss>=9.0.1              # 高性能屏幕截图
+opencv-python>=4.8.0    # 图像处理
+numpy>=1.24.0           # 数组计算
+pyautogui>=0.9.54       # 键盘鼠标控制
+Pillow>=10.0.0          # 图像处理
+
+# Windows特定依赖
+pywin32>=306            # Windows API（窗口查找等）
+
+# 可选依赖
+# pytesseract>=0.3.10   # OCR识别（如需识别文字）
+# opencv-contrib-python>=4.8.0  # OpenCV扩展功能
