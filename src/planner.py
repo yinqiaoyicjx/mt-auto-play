@@ -236,23 +236,23 @@ class GamePlanner:
             if plan:
                 return plan
 
-        # 优先级2: 拾取附近的钥匙
+        # 优先级2: 换楼层（提升优先级！如果当前楼层无可探索内容，立即换楼层）
+        plan = self._plan_change_floor()
+        if plan:
+            return plan
+
+        # 优先级3: 拾取附近的钥匙（验证是否可达）
         plan = self._plan_collect_keys()
         if plan:
             return plan
 
-        # 优先级3: 击败可战胜的怪物
+        # 优先级4: 击败可战胜的怪物
         plan = self._plan_fight_monsters()
         if plan:
             return plan
 
-        # 优先级4: 探索未访问区域
+        # 优先级5: 探索未访问区域
         plan = self._plan_explore()
-        if plan:
-            return plan
-
-        # 优先级5: 换楼层
-        plan = self._plan_change_floor()
         if plan:
             return plan
 
@@ -270,40 +270,48 @@ class GamePlanner:
         return None
 
     def _plan_collect_keys(self) -> Optional[Plan]:
-        """规划收集钥匙"""
+        """规划收集钥匙（验证钥匙是否真实存在且可达）"""
         current_floor = self.state.get_current_floor()
         player = self.state.player
 
         if not current_floor.keys:
             return None
 
-        # 找最近的钥匙
-        closest_key = None
-        closest_dist = float('inf')
-
+        # 过滤掉不可达的钥匙（被墙或其他障碍阻挡）
+        valid_keys = []
         for key in current_floor.keys:
+            # 检查钥匙位置是否可达
             path = self.path_finder.bfs(
                 (player.x, player.y),
                 (key.x, key.y),
                 current_floor,
-                obstacles=False  # 钥匙通常不被障碍物阻挡
+                obstacles=True  # 考虑障碍物
             )
 
-            if path and len(path) < closest_dist:
-                closest_dist = len(path)
-                closest_key = key
+            if path:
+                valid_keys.append((key, len(path)))
 
-        if closest_key:
-            return Plan(
-                Action.WAIT,  # 动作将在执行时确定
-                closest_key.x,
-                closest_key.y,
-                0,
-                10,  # 钥匙的价值
-                f"拾取{closest_key.color}钥匙"
-            )
+        # 如果没有可达的钥匙，清除钥匙列表（可能是旧数据）
+        if not valid_keys:
+            current_floor.keys = []
+            return None
 
-        return None
+        # 找最近的钥匙
+        valid_keys.sort(key=lambda x: x[1])
+        closest_key, dist = valid_keys[0]
+
+        # 如果距离太远（超过20步），优先考虑换楼层
+        if dist > 20:
+            return None
+
+        return Plan(
+            Action.WAIT,  # 动作将在执行时确定
+            closest_key.x,
+            closest_key.y,
+            0,
+            10,  # 钥匙的价值
+            f"拾取{closest_key.color}钥匙"
+        )
 
     def _plan_fight_monsters(self) -> Optional[Plan]:
         """规划战斗"""

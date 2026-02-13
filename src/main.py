@@ -70,7 +70,8 @@ class MotaBot:
         print("  - 控制器")
         self.controller = SmartController(
             key_delay=0.05,
-            action_delay=0.15
+            action_delay=0.15,
+            window_title=window_title
         )
 
         # 录制器（可选）
@@ -138,6 +139,17 @@ class MotaBot:
             doors = self.detector.detect_doors(frame)
             keys = self.detector.detect_keys(frame)
             stairs = self.detector.detect_stairs(frame)
+
+            # 调试：显示检测到的元素（每次都显示）
+            print(f"[调试] 玩家位置: ({player.x}, {player.y})")
+            print(f"[调试] 检测到: {len(monsters)} 怪物, {len(doors)} 门, {len(keys)} 钥匙")
+            if keys:
+                for k in keys:
+                    print(f"  - 钥匙: ({k.x}, {k.y}) {k.color}")
+            if stairs.get('up'):
+                print(f"  - 上楼楼梯: ({stairs['up'].x}, {stairs['up'].y})")
+            if stairs.get('down'):
+                print(f"  - 下楼楼梯: ({stairs['down'].x}, {stairs['down'].y})")
 
             # 4. 更新游戏状态
             # 注意：这里简化处理，实际需要从状态栏读取完整信息

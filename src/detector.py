@@ -8,6 +8,7 @@ import json
 import os
 from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
+from config import MAP_REGION
 
 
 @dataclass
@@ -174,7 +175,7 @@ class GameElementDetector:
 
     def detect_monsters(self, frame: np.ndarray) -> List[Monster]:
         """
-        检测画面中的所有怪物
+        检测画面中的所有怪物（仅在地图区域内检测，排除状态栏）
 
         Args:
             frame: 游戏画面
@@ -184,18 +185,34 @@ class GameElementDetector:
         """
         monsters = []
 
-        # 将画面分割成网格，逐个检测
+        # 裁剪到地图区域（排除左右状态栏）
+        x_start = MAP_REGION.get('x_start', 140)
+        y_start = MAP_REGION.get('y_start', 60)
+        x_end = MAP_REGION.get('x_end', 558)
+        y_end = MAP_REGION.get('y_end', 412)
+
         h, w = frame.shape[:2]
-        rows = h // self.GRID_SIZE
-        cols = w // self.GRID_SIZE
+        x_end = min(x_end, w)
+        y_end = min(y_end, h)
+
+        # 将地图区域分割成网格，逐个检测
+        map_width = x_end - x_start
+        map_height = y_end - y_start
+
+        rows = map_height // self.GRID_SIZE
+        cols = map_width // self.GRID_SIZE
 
         for row in range(rows):
             for col in range(cols):
-                # 提取当前格子
-                x1 = col * self.GRID_SIZE
-                y1 = row * self.GRID_SIZE
+                # 计算完整画面中的格子坐标
+                x1 = x_start + col * self.GRID_SIZE
+                y1 = y_start + row * self.GRID_SIZE
                 x2 = x1 + self.GRID_SIZE
                 y2 = y1 + self.GRID_SIZE
+
+                # 确保不超出画面范围
+                if x2 > w or y2 > h:
+                    continue
 
                 cell = frame[y1:y2, x1:x2]
 
@@ -255,7 +272,7 @@ class GameElementDetector:
 
     def detect_doors(self, frame: np.ndarray) -> List[Door]:
         """
-        检测画面中的所有门
+        检测画面中的所有门（仅在地图区域内检测，排除状态栏）
 
         Args:
             frame: 游戏画面
@@ -264,7 +281,22 @@ class GameElementDetector:
             门列表
         """
         doors = []
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+        # 裁剪到地图区域（排除左右状态栏）
+        x_start = MAP_REGION.get('x_start', 140)
+        y_start = MAP_REGION.get('y_start', 60)
+        x_end = MAP_REGION.get('x_end', 558)
+        y_end = MAP_REGION.get('y_end', 412)
+
+        h, w = frame.shape[:2]
+        x_end = min(x_end, w)
+        y_end = min(y_end, h)
+
+        map_frame = frame[y_start:y_end, x_start:x_end]
+        if map_frame.size == 0:
+            return doors
+
+        hsv = cv2.cvtColor(map_frame, cv2.COLOR_BGR2HSV)
 
         # 定义不同颜色门的范围
         door_colors = {
@@ -272,10 +304,6 @@ class GameElementDetector:
             'blue': (np.array([100, 50, 50]), np.array([130, 255, 255])),
             'red': (np.array([0, 50, 50]), np.array([10, 255, 255])),
         }
-
-        h, w = frame.shape[:2]
-        rows = h // self.GRID_SIZE
-        cols = w // self.GRID_SIZE
 
         for color_name, (lower, upper) in door_colors.items():
             mask = cv2.inRange(hsv, lower, upper)
@@ -291,9 +319,9 @@ class GameElementDetector:
                     # 获取边界框
                     x, y, w_box, h_box = cv2.boundingRect(contour)
 
-                    # 计算中心点
-                    cx = x + w_box // 2
-                    cy = y + h_box // 2
+                    # 计算中心点（加上区域偏移）
+                    cx = x + w_box // 2 + x_start
+                    cy = y + h_box // 2 + y_start
 
                     # 转换为网格坐标
                     grid_x = cx // self.GRID_SIZE
@@ -305,7 +333,7 @@ class GameElementDetector:
 
     def detect_keys(self, frame: np.ndarray) -> List[Key]:
         """
-        检测画面中的所有钥匙
+        检测画面中的所有钥匙（仅在地图区域内检测，排除状态栏）
 
         Args:
             frame: 游戏画面
@@ -314,7 +342,24 @@ class GameElementDetector:
             钥匙列表
         """
         keys = []
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+        # 裁剪到地图区域（排除左右状态栏）
+        x_start = MAP_REGION.get('x_start', 140)
+        y_start = MAP_REGION.get('y_start', 60)
+        x_end = MAP_REGION.get('x_end', 558)
+        y_end = MAP_REGION.get('y_end', 412)
+
+        # 确保不超出画面范围
+        h, w = frame.shape[:2]
+        x_end = min(x_end, w)
+        y_end = min(y_end, h)
+
+        # 裁剪到地图区域
+        map_frame = frame[y_start:y_end, x_start:x_end]
+        if map_frame.size == 0:
+            return keys
+
+        hsv = cv2.cvtColor(map_frame, cv2.COLOR_BGR2HSV)
 
         # 钥匙颜色范围（与门相同）
         key_colors = {
@@ -322,10 +367,6 @@ class GameElementDetector:
             'blue': (np.array([100, 50, 50]), np.array([130, 255, 255])),
             'red': (np.array([0, 50, 50]), np.array([10, 255, 255])),
         }
-
-        h, w = frame.shape[:2]
-        rows = h // self.GRID_SIZE
-        cols = w // self.GRID_SIZE
 
         for color_name, (lower, upper) in key_colors.items():
             mask = cv2.inRange(hsv, lower, upper)
@@ -342,8 +383,9 @@ class GameElementDetector:
                     cx = x + w_box // 2
                     cy = y + h_box // 2
 
-                    grid_x = cx // self.GRID_SIZE
-                    grid_y = cy // self.GRID_SIZE
+                    # 转换为完整画面的网格坐标（加上区域偏移）
+                    grid_x = (cx + x_start) // self.GRID_SIZE
+                    grid_y = (cy + y_start) // self.GRID_SIZE
 
                     keys.append(Key(x=grid_x, y=grid_y, color=color_name))
 
@@ -351,7 +393,7 @@ class GameElementDetector:
 
     def detect_stairs(self, frame: np.ndarray) -> Dict[str, Optional[Point]]:
         """
-        检测楼梯位置
+        检测楼梯位置（仅在地图区域内检测，排除状态栏）
 
         Args:
             frame: 游戏画面
@@ -361,11 +403,25 @@ class GameElementDetector:
         """
         result = {'up': None, 'down': None}
 
+        # 裁剪到地图区域（排除左右状态栏）
+        x_start = MAP_REGION.get('x_start', 140)
+        y_start = MAP_REGION.get('y_start', 60)
+        x_end = MAP_REGION.get('x_end', 558)
+        y_end = MAP_REGION.get('y_end', 412)
+
+        h, w = frame.shape[:2]
+        x_end = min(x_end, w)
+        y_end = min(y_end, h)
+
+        map_frame = frame[y_start:y_end, x_start:x_end]
+        if map_frame.size == 0:
+            return result
+
         # 楼梯通常有特定的形状和颜色
         # 上楼楼梯：通常在上方，箭头向上
         # 下楼楼梯：通常在下方，箭头向下
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(map_frame, cv2.COLOR_BGR2GRAY)
 
         # 使用边缘检测
         edges = cv2.Canny(gray, 50, 150)
@@ -373,25 +429,24 @@ class GameElementDetector:
         # 查找轮廓
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        h, w = frame.shape[:2]
-        rows = h // self.GRID_SIZE
-        cols = w // self.GRID_SIZE
+        map_height = y_end - y_start
+        rows = map_height // self.GRID_SIZE
 
         for contour in contours:
             area = cv2.contourArea(contour)
 
             if 300 < area < 1000:
                 x, y, w_box, h_box = cv2.boundingRect(contour)
-                cx = x + w_box // 2
-                cy = y + h_box // 2
+                cx = x + w_box // 2 + x_start
+                cy = y + h_box // 2 + y_start
 
                 grid_x = cx // self.GRID_SIZE
                 grid_y = cy // self.GRID_SIZE
 
                 # 根据位置判断是上楼还是下楼
-                if grid_y < rows // 3:  # 上部区域
+                if grid_y < rows // 3 + (y_start // self.GRID_SIZE):  # 上部区域
                     result['up'] = Point(grid_x, grid_y)
-                elif grid_y > rows * 2 // 3:  # 下部区域
+                elif grid_y > (rows * 2 // 3) + (y_start // self.GRID_SIZE):  # 下部区域
                     result['down'] = Point(grid_x, grid_y)
 
         return result

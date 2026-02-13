@@ -6,6 +6,8 @@ import pyautogui
 import time
 from typing import Optional, Set
 from enum import Enum
+import win32gui
+import win32con
 
 from planner import Action
 
@@ -17,19 +19,21 @@ class Controller:
     DEFAULT_KEY_DELAY = 0.05  # 按键间隔（秒）
     DEFAULT_ACTION_DELAY = 0.2  # 动作完成后等待时间（秒）
 
-    def __init__(self, key_delay: float = None, action_delay: float = None):
+    def __init__(self, key_delay: float = None, action_delay: float = None, window_title: str = "魔塔"):
         """
         初始化控制器
 
         Args:
             key_delay: 按键间隔时间（秒）
             action_delay: 动作间隔时间（秒）
+            window_title: 游戏窗口标题
         """
         # 禁用pyautogui的安全检查（需要快速输入时）
         pyautogui.FAILSAFE = False
 
         self.key_delay = key_delay if key_delay is not None else self.DEFAULT_KEY_DELAY
         self.action_delay = action_delay if action_delay is not None else self.DEFAULT_ACTION_DELAY
+        self.window_title = window_title
 
         # 按键映射
         self.key_map = {
@@ -45,6 +49,48 @@ class Controller:
         self.total_actions = 0
         self.action_history: list = []
 
+    def activate_window(self) -> bool:
+        """
+        激活游戏窗口（使其获得焦点）
+
+        Returns:
+            是否成功激活
+        """
+        try:
+            # 查找游戏窗口
+            hwnd = win32gui.FindWindow(None, self.window_title)
+
+            if not hwnd:
+                # 尝试模糊匹配
+                def window_callback(hwnd, windows):
+                    if win32gui.IsWindowVisible(hwnd):
+                        title = win32gui.GetWindowText(hwnd)
+                        if self.window_title in title:
+                            windows.append(hwnd)
+                    return True
+
+                windows = []
+                win32gui.EnumWindows(window_callback, windows)
+
+                if windows:
+                    hwnd = windows[0]
+                else:
+                    print(f"警告: 未找到窗口 '{self.window_title}'")
+                    return False
+
+            # 激活窗口
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            win32gui.SetForegroundWindow(hwnd)
+
+            # 等待窗口激活
+            time.sleep(0.1)
+
+            return True
+
+        except Exception as e:
+            print(f"激活窗口失败: {e}")
+            return False
+
     def press_key(self, key: str, duration: float = 0.05):
         """
         按下并释放一个键
@@ -58,13 +104,14 @@ class Controller:
         pyautogui.keyUp(key)
         time.sleep(self.key_delay)
 
-    def execute(self, action: Action, repeats: int = 1) -> bool:
+    def execute(self, action: Action, repeats: int = 1, activate: bool = True) -> bool:
         """
         执行一个动作
 
         Args:
             action: 要执行的动作
             repeats: 重复次数
+            activate: 是否激活游戏窗口
 
         Returns:
             是否执行成功
@@ -74,6 +121,10 @@ class Controller:
             if not key:
                 print(f"未知动作: {action}")
                 return False
+
+            # 注意：网页游戏需要手动点击网页聚焦，不要自动激活窗口
+            # if activate and hasattr(self, 'window_title'):
+            #     self.activate_window()
 
             for _ in range(repeats):
                 self.press_key(key)
@@ -212,8 +263,8 @@ class Controller:
 class SmartController(Controller):
     """智能控制器：具有错误检测和恢复功能"""
 
-    def __init__(self, key_delay: float = None, action_delay: float = None):
-        super().__init__(key_delay, action_delay)
+    def __init__(self, key_delay: float = None, action_delay: float = None, window_title: str = "魔塔"):
+        super().__init__(key_delay, action_delay, window_title)
         self.retry_count = 0
         self.max_retries = 3
 
